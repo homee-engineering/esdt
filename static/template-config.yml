@@ -1,0 +1,6 @@
+dev:
+  conn: http://localhost:9200
+  dir: es/operations
+prod:
+  conn: http://elasticsearch:9200
+  dir: es/operations

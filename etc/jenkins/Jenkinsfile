@@ -1,0 +1,42 @@
+pipeline {
+    agent {
+        label 'jenkins-slave'
+    }
+    stages {
+        stage('Build') {
+            agent {
+                docker {
+                    image 'hutchapp/go-builder:1.11.1'
+                    reuseNode true
+                }
+            }
+            when {
+                branch 'master'
+                expression { return build.isRelease() }
+            }
+            steps {
+                buildGoCli 'esdt'
+            }
+        }
+        stage('Publish') {
+            when {
+                branch 'master'
+                expression { return build.isRelease() }
+            }
+            steps {
+                revAndTag()
+                githubRelease(
+                        tag.latest(),
+                        tag.latest(),
+                        ['esdt/mac/esdt', 'esdt/linux/esdt', 'esdt/win/esdt'],
+                        ['mac/esdt', 'linux/esdt', 'win/esdt']
+                )
+            }
+        }
+    }
+    post {
+        failure {
+            slackBuildFailure()
+        }
+    }
+}

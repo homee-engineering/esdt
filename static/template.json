@@ -1,0 +1,14 @@
+{
+  "method": "{{.Method}}",
+  "uri": "{{.Uri}}",
+  "body": {
+
+  },
+  "rollback": {
+    "method": "{{.OppositeMethod}}",
+    "uri": "",
+    "body": {
+
+    }
+  }
+}
