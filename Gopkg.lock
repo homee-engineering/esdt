@@ -2,14 +2,6 @@
 
 
 [[projects]]
-  branch = "master"
-  digest = "1:59c503e688bf1b6b10774db6d99fb54518231655b780492dd9084bc451bee06f"
-  name = "github.com/TylerBrock/colorjson"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "95ec53f28296f47af86a81eb73f0d7fe2b23a322"
-
-[[projects]]
   digest = "1:865079840386857c809b72ce300be7580cb50d3d3129ce11bf9aa6ca2bc1934a"
   name = "github.com/fatih/color"
   packages = ["."]
@@ -32,6 +24,14 @@
   pruneopts = "UT"
   revision = "5a2cbb54c4e7d482e3f518c56f1f86f133d5204f"
   version = "v1.13.7"
+
+[[projects]]
+  digest = "1:d3bbe0a681fb6fb1d10157ae3ac8eceb801b0eece32a50200e8e536b564a7c29"
+  name = "github.com/homee-engineering/go-commons"
+  packages = ["slice"]
+  pruneopts = "UT"
+  revision = "25aa1007389182f25cfcebdfc3f6b1932df8b8d6"
+  version = "1.2.7"
 
 [[projects]]
   digest = "1:2474b4954b4be5163937f90ff3ab0769c2f9c432ccdb7030063fc94d6baf1a20"
@@ -85,10 +85,10 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
-    "github.com/TylerBrock/colorjson",
     "github.com/fatih/color",
     "github.com/go-yaml/yaml",
     "github.com/gobuffalo/packr",
+    "github.com/homee-engineering/go-commons/slice",
     "github.com/imroc/req",
     "github.com/pkg/errors",
     "github.com/urfave/cli",
