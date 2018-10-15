@@ -3,6 +3,15 @@ pipeline {
         label 'jenkins-slave'
     }
     stages {
+        stage('Tag') {
+            when {
+                branch 'master'
+                expression { return build.isRelease() }
+            }
+            steps {
+                revAndTag()
+            }
+        }
         stage('Build') {
             agent {
                 docker {
@@ -24,7 +33,6 @@ pipeline {
                 expression { return build.isRelease() }
             }
             steps {
-                revAndTag()
                 githubRelease(
                         tag.latest(),
                         tag.latest(),
