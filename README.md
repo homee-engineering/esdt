@@ -4,7 +4,7 @@ esdt is a tool for seeding/migrating your Elasticsearch datastore
 ## Installation
 1. Go to the [releases](https://github.com/homee-engineering/esdt/releases)
 1. Select your platform and download
-1. Move the binary `mv ~/Downloads/*.esdt. /usr/local/bin/esdt`:
+1. Move the binary `mv ~/Downloads/*.esdt /usr/local/bin/esdt`:
 1. Run `chmod +x /usr/local/bin/esdt`
 
 ## Usage
