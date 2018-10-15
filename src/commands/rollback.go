@@ -14,8 +14,8 @@ import (
 
 var RollbackCommand = cli.Command{
 	Name:      "rollback",
-	Usage:     "Rollback a single data template or a set of data templates. The rollback ID is defined as the filename of the data template minus the extension.",
-	ArgsUsage: "[Flags] [Rollback ID]",
+	Usage:     "Rollback a single data template or a set of data templates. The data template ID is defined as the filename of the data template minus the extension.",
+	ArgsUsage: "[Flags] [Data Template ID]",
 	Aliases:   []string{"roll"},
 	Subcommands: []cli.Command{
 		src.HelpCommand,
@@ -27,7 +27,7 @@ var RollbackCommand = cli.Command{
 var rollbackFlags = []cli.Flag{
 	cli.StringFlag{
 		Name:  "from, f",
-		Usage: "The rollback ID to rollback from.\tOptional",
+		Usage: "The data template ID to rollback from.\tOptional",
 	},
 }
 
@@ -38,7 +38,7 @@ func rollbackAction(c *cli.Context) error {
 	conn := c.GlobalString("conn")
 
 	if rollbackId == "" {
-		return cli.NewExitError(color.RedString("A rollback ID is required"), 1)
+		return cli.NewExitError(color.RedString("A data template ID is required"), 1)
 	}
 
 	if from == "" {
@@ -49,7 +49,7 @@ func rollbackAction(c *cli.Context) error {
 			return errors.New(fmt.Sprintf("Could not find directory %s", dir))
 		}
 		for _, f := range fi {
-			if f.Name() >= from && f.Name() <= rollbackId+".json" {
+			if utils.JsonRegEx.MatchString(f.Name()) && f.Name() >= from && f.Name() <= rollbackId+".json" {
 				rollback(conn, dir, f.Name())
 			}
 		}

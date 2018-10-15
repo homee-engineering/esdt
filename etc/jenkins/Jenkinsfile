@@ -15,7 +15,7 @@ pipeline {
                 expression { return build.isRelease() }
             }
             steps {
-                buildGoCli 'esdt'
+                buildGoCli('esdt', tag.latest())
             }
         }
         stage('Publish') {

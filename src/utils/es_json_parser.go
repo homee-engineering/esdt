@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-var jsonRegEx = regexp.MustCompile(".+\\.json")
+var JsonRegEx = regexp.MustCompile(".+\\.json")
 
 type DataTemplate struct {
 	Method   string                 `json:"method"`
@@ -34,7 +34,7 @@ func RunFiles(config *config, dir string) error {
 
 	var dataTemplates []*DataTemplate
 	for _, v := range fi {
-		if jsonRegEx.MatchString(v.Name()) {
+		if JsonRegEx.MatchString(v.Name()) {
 			dataTemplate, err := LoadDataTemplate(dir, v.Name())
 			if err != nil {
 				return err

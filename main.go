@@ -9,6 +9,8 @@ import (
 	"os"
 )
 
+var version string
+
 var GlobalFlags = []cli.Flag{
 	cli.StringFlag{
 		Name:   "c, conn",
@@ -17,9 +19,10 @@ var GlobalFlags = []cli.Flag{
 		EnvVar: "ELASTICSEARCH_URL",
 	},
 	cli.StringFlag{
-		Name:  "d, dir",
-		Usage: "The target directory for all esdt data.\tDefault: " + utils.DefaultTargetDir,
-		Value: utils.DefaultTargetDir,
+		Name:   "d, dir",
+		Usage:  "The target directory for all esdt data. Accepts env variable ESDT_TARGET_DIR.\tDefault: " + utils.DefaultTargetDir,
+		Value:  utils.DefaultTargetDir,
+		EnvVar: "ESDT_TARGET_DIR",
 	},
 	cli.StringFlag{
 		Name:  "conf, config",
@@ -27,9 +30,10 @@ var GlobalFlags = []cli.Flag{
 		Value: "es/config.yml",
 	},
 	cli.StringFlag{
-		Name:  "e, env",
-		Usage: "The environment to run the tool in.\tDefault: dev",
-		Value: "dev",
+		Name:   "e, env",
+		Usage:  "The environment to run the tool in. Accepts env variable ESDT_ENV\tDefault: dev",
+		Value:  "dev",
+		EnvVar: "ESDT_ENV",
 	},
 }
 
@@ -39,7 +43,7 @@ func main() {
 	app.Usage = "Elasticsearch Data Tool. For initializing data on Elasticsearch"
 	app.ArgsUsage = "[Command]"
 	app.Flags = GlobalFlags
-	app.Version = "1.0.0"
+	app.Version = version
 	app.Commands = []cli.Command{
 		commands.RunCommand,
 		commands.GenerateCommand,
