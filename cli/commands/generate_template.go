@@ -1,9 +1,7 @@
 package commands
 
 import (
-	"esdt/src"
-	"esdt/src/io"
-	"esdt/src/utils"
+	"esdt/cli/io"
 	"github.com/fatih/color"
 	"github.com/homee-engineering/go-commons/slice"
 	"github.com/urfave/cli"
@@ -15,19 +13,19 @@ import (
 
 const timeFormatString = "20060102150405"
 
-var GenerateTemplateCommand = cli.Command{
-	Name:      "template",
-	Usage:     "Generate a data template",
+var GenerateOperationCommand = cli.Command{
+	Name:      "operation",
+	Usage:     "Generate an Elasticsearch data operation",
 	ArgsUsage: "[Flags] [Name]",
-	Aliases:   []string{"temp"},
+	Aliases:   []string{"op", "o"},
 	Subcommands: []cli.Command{
-		src.HelpCommand,
+		HelpCommand,
 	},
-	Action: generateTemplateAction,
-	Flags:  generateTemplateFlags,
+	Action: generateOperationAction,
+	Flags:  generateOperationFlags,
 }
 
-var generateTemplateFlags = []cli.Flag{
+var generateOperationFlags = []cli.Flag{
 	cli.StringFlag{
 		Name:  "method, m",
 		Usage: "The HTTP Method to be used for Elasticsearch. Can be GET, PUT, POST, HEAD, DELETE\tDefault: GET",
@@ -53,18 +51,14 @@ type templateModel struct {
 	OppositeMethod string
 }
 
-func generateTemplateAction(c *cli.Context) error {
+func generateOperationAction(c *cli.Context) error {
 	name := c.Args().First()
 	method := c.String("method")
 	uri := c.String("uri")
-	config, err := utils.GetConfig(c)
+	e := newEsdt(c)
 
 	if method != "" && !slice.ContainsStringCaseInsensitive(validElasticSearchHttpMethods, method) {
 		return cli.NewExitError(color.RedString("HTTP method must be one of %s", strings.Join(validElasticSearchHttpMethods, ", ")), 1)
-	}
-
-	if err != nil {
-		return cli.NewExitError(color.RedString(err.Error()), 1)
 	}
 
 	if name == "" {
@@ -90,7 +84,7 @@ func generateTemplateAction(c *cli.Context) error {
 		return cli.NewExitError(color.RedString("Failed to generate json: %s", err), 1)
 	}
 
-	err = os.Rename(fp, path.Join(config.TargetDir, fileName))
+	err = os.Rename(fp, path.Join(e.GetConfig().TargetDir, fileName))
 	if err != nil {
 		return cli.NewExitError(color.RedString("Failed to generate json: %s", err), 1)
 	}

@@ -24,3 +24,7 @@
 [[constraint]]
   name = "github.com/homee-engineering/go-commons"
   version = "1.2.7"
+
+[[constraint]]
+  name = "github.com/imdario/mergo"
+  version = "0.3.6"

@@ -1,8 +1,7 @@
 package commands
 
 import (
-	"esdt/src"
-	"esdt/src/io"
+	"esdt/cli/io"
 	"github.com/urfave/cli"
 	"os"
 	"path"
@@ -13,7 +12,7 @@ var GenerateDirCommand = cli.Command{
 	Usage:     "Generate the directory used by esdt",
 	ArgsUsage: "[Flags]",
 	Subcommands: []cli.Command{
-		src.HelpCommand,
+		HelpCommand,
 	},
 	Action: generateDirAction,
 	Flags:  generateDirFlags,

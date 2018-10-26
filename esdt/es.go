@@ -1,4 +1,4 @@
-package utils
+package esdt
 
 import (
 	"encoding/json"
@@ -21,28 +21,13 @@ type documentExistsRes struct {
 	Found bool `json:"found"`
 }
 
+const NoRollbackFieldErrorMsg = "No rollback listed"
+
 type documentDeletedRes struct {
 	Result string `json:"result"`
 }
 
-const NoRollbackFieldErrorMsg = "No rollback listed"
-
-func CreateOperationsIndex(conn string) error {
-	body := "{ \"mappings\": { \"_doc\": { \"properties\": { \"inserted_at\": { \"type\": \"date\" } } } } }"
-	return runEsQueryAndValidate(conn, "operations", "put", body)
-}
-
-func OperationsIndexExists(conn string) (bool, error) {
-	res, err := runEsQuery(conn, "operations", "head", nil)
-
-	if err != nil {
-		return false, err
-	}
-
-	return res.Response().StatusCode > 199 && res.Response().StatusCode < 300, nil
-}
-
-func DeleteOperationIndex(conn string, rollbackId string) error {
+func deleteOperationIndex(conn string, rollbackId string) error {
 	res, err := runEsQuery(conn, "operations/_doc/"+rollbackId, "delete", nil)
 
 	if err != nil {
@@ -61,11 +46,30 @@ func DeleteOperationIndex(conn string, rollbackId string) error {
 	return nil
 }
 
-func RollbackDataTemplate(conn string, dt *DataTemplate) error {
+func createOperationsIndex(conn string) error {
+	body := "{ \"mappings\": { \"_doc\": { \"properties\": { \"inserted_at\": { \"type\": \"date\" } } } } }"
+	return runEsQueryAndValidate(conn, "operations", "put", body)
+}
+
+func operationsIndexExists(conn string) (bool, error) {
+	res, err := runEsQuery(conn, "operations", "head", nil)
+
+	if err != nil {
+		return false, err
+	}
+
+	return res.Response().StatusCode > 199 && res.Response().StatusCode < 300, nil
+}
+
+func rollbackDataTemplate(conn string, dt *Operation) error {
 	if dt.Rollback.Uri == "" || dt.Rollback.Method == "" {
 		return errors.New(NoRollbackFieldErrorMsg)
 	} else {
-		return runEsQueryAndValidate(conn, dt.Rollback.Uri, dt.Rollback.Method, dt.Rollback.Body)
+		err := runEsQueryAndValidate(conn, dt.Rollback.Uri, dt.Rollback.Method, dt.Rollback.Body)
+		if err != nil {
+			return err
+		}
+		return deleteOperationIndex(conn, dt.Id)
 	}
 }
 
@@ -82,8 +86,8 @@ func operationsDocumentExists(conn string, id string) bool {
 	return d.Found
 }
 
-func executeDataTemplates(conn string, dataTemplates []*DataTemplate) ([]*DataTemplate, []error) {
-	failed := make([]*DataTemplate, 0)
+func executeDataTemplates(conn string, dataTemplates []*Operation) ([]*Operation, []error) {
+	failed := make([]*Operation, 0)
 	errs := make([]error, 0)
 
 	for _, v := range dataTemplates {
@@ -108,7 +112,7 @@ func executeDataTemplates(conn string, dataTemplates []*DataTemplate) ([]*DataTe
 	return failed, errs
 }
 
-func executeDataTemplate(conn string, dataTemplate *DataTemplate) error {
+func executeDataTemplate(conn string, dataTemplate *Operation) error {
 	if !operationsDocumentExists(conn, dataTemplate.Id) {
 		err := runEsQueryAndValidate(conn, dataTemplate.Uri, dataTemplate.Method, dataTemplate.Body)
 
@@ -117,9 +121,9 @@ func executeDataTemplate(conn string, dataTemplate *DataTemplate) error {
 		}
 		if err != nil {
 			newError := errors.New(err.Error())
-			err = RollbackDataTemplate(conn, dataTemplate)
+			err = rollbackDataTemplate(conn, dataTemplate)
 			if err != nil {
-				newError = errors.Wrap(newError, "Rollback failed")
+				newError = errors.Wrap(newError, "RollbackFile failed")
 			}
 			return newError
 		} else {
