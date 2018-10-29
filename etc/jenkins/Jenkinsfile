@@ -12,6 +12,21 @@ pipeline {
                 revAndTag()
             }
         }
+        stage('Test') {
+            when {
+                branch 'master'
+                expression { return build.isRelease() }
+            }
+            agent {
+                docker {
+                    image "hutchapp/go-builder:1.11.1"
+                    reuseNode true
+                }
+            }
+            steps {
+                sh "go test ./..."
+            }
+        }
         stage('Build') {
             agent {
                 docker {
