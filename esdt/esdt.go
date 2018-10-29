@@ -68,7 +68,7 @@ type Operation struct {
 	// e.g. users/_search
 	Uri string `json:"uri"`
 
-	// The body of the Elasticsearch request.
+	// The body of the Elasticsearch request. Not required.
 	Body map[string]interface{} `json:"body"`
 
 	// The work that will be done if Rollback is called on this Operation
@@ -175,6 +175,13 @@ func (e *esdtImpl) Rollback(operation *Operation) error {
 // This command also attempts to perform a rollback if an error occurs. There is no need to
 // call Rollback(Operation) if an error is returned.
 func (e *esdtImpl) Run(operation *Operation) error {
+	operation.Id = strings.TrimSpace(operation.Id)
+	if operation.Body == nil {
+		operation.Body = make(map[string]interface{})
+	}
+	if operation.Rollback.Body == nil {
+		operation.Rollback.Body = make(map[string]interface{})
+	}
 	ex, err := operationsIndexExists(e.Config.Conn)
 	if err != nil {
 		return err
@@ -212,33 +219,40 @@ func loadConfig(in *Config) (c *Config) {
 	if in == nil {
 		in = &Config{}
 	}
-	content, err := ioutil.ReadFile(in.ConfigFile)
-	if err != nil {
-		err = errors.Wrap(err, fmt.Sprintf("Problems reading file %s: ", in.ConfigFile))
-		return nil
-	}
-	var yc yamlConfig
-	err = yaml.Unmarshal(content, &yc)
-	if err != nil {
-		return nil
+
+	if in.ConfigFile == "" {
+		in.ConfigFile = DefaultConfigFile
 	}
 
-	c = yc[in.Env]
-	if c == nil {
-		c = in
+	content, err := ioutil.ReadFile(in.ConfigFile)
+	if err == nil {
+		var yc yamlConfig
+		err = yaml.Unmarshal(content, &yc)
+		if err != nil {
+			return nil
+		}
+
+		c = yc[in.Env]
+		if c == nil {
+			c = in
+		}
 	}
-	defaultConfig(c)
+	c = defaultConfig(c)
 
 	mergo.Merge(c, *in, mergo.WithOverride)
 
 	return c
 }
 
-func defaultConfig(c *Config) {
+func defaultConfig(c *Config) *Config {
+	if c == nil {
+		c = &Config{}
+	}
 	if c.TargetDir == "" {
 		c.TargetDir = DefaultTargetDir
 	}
 	if c.Conn == "" {
 		c.Conn = DefaultConnUrl
 	}
+	return c
 }

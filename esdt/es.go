@@ -54,6 +54,10 @@ func createOperationsIndex(conn string) error {
 func operationsIndexExists(conn string) (bool, error) {
 	res, err := runEsQuery(conn, "operations", "head", nil)
 
+	if res == nil {
+		return false, errors.New("no response received from Elasticsearch")
+	}
+
 	if err != nil {
 		return false, err
 	}
@@ -76,7 +80,7 @@ func rollbackDataTemplate(conn string, dt *Operation) error {
 func operationsDocumentExists(conn string, id string) bool {
 	res, err := runEsQuery(conn, "operations/_doc/"+id, "get", nil)
 
-	if err != nil {
+	if res == nil || err != nil {
 		return false
 	}
 
@@ -112,22 +116,22 @@ func executeDataTemplates(conn string, dataTemplates []*Operation) ([]*Operation
 	return failed, errs
 }
 
-func executeDataTemplate(conn string, dataTemplate *Operation) error {
-	if !operationsDocumentExists(conn, dataTemplate.Id) {
-		err := runEsQueryAndValidate(conn, dataTemplate.Uri, dataTemplate.Method, dataTemplate.Body)
+func executeDataTemplate(conn string, operation *Operation) error {
+	if !operationsDocumentExists(conn, operation.Id) {
+		err := runEsQueryAndValidate(conn, operation.Uri, operation.Method, operation.Body)
 
 		operations := operations{
 			InsertedAt: time.Now(),
 		}
 		if err != nil {
-			newError := errors.New(err.Error())
-			err = rollbackDataTemplate(conn, dataTemplate)
+			newError := errors.Wrap(err, "")
+			err = rollbackDataTemplate(conn, operation)
 			if err != nil {
 				newError = errors.Wrap(newError, "RollbackFile failed")
 			}
 			return newError
 		} else {
-			err = runEsQueryAndValidate(conn, "/operations/_doc/"+dataTemplate.Id, "post", &operations)
+			err = runEsQueryAndValidate(conn, "/operations/_doc/"+operation.Id, "post", &operations)
 			if err != nil {
 				return errors.New("Failed to add data template to operations")
 			}
@@ -175,8 +179,13 @@ func runEsQueryAndValidate(conn string, uri string, method string, bodyJson inte
 		return err
 	}
 
+	if res == nil {
+		return errors.New("did not receive a response from elasticsearch")
+	}
+
 	if res.Response().StatusCode < 200 || res.Response().StatusCode > 299 {
 		bodyBytes, _ := ioutil.ReadAll(res.Response().Body)
+		errors.New(fmt.Sprintf("status code was not 200: %s. Reason: %s", res.Response().Status, string(bodyBytes)))
 		return errors.New(fmt.Sprintf("status code was not 200: %s. Reason: %s", res.Response().Status, string(bodyBytes)))
 	}
 

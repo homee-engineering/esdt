@@ -1,7 +1,7 @@
 package commands
 
 import (
-	"fmt"
+	"github.com/fatih/color"
 	"github.com/urfave/cli"
 )
 
@@ -21,7 +21,7 @@ func runAction(c *cli.Context) error {
 
 	err := e.RunAll()
 	if err != nil {
-		cli.NewExitError(fmt.Sprintf("Failed to create operations index: %s", err.Error()), 1)
+		return cli.NewExitError(color.RedString("Failed to create operations index: %s", err.Error()), 1)
 	}
 
 	return nil
