@@ -36,7 +36,7 @@ pipeline {
                 githubRelease(
                         tag.latest(),
                         tag.latest(),
-                        ['esdt/mac/esdt', 'esdt/linux/esdt', 'esdt/win/esdt'],
+                        ['build/mac/esdt', 'build/linux/esdt', 'build/win/esdt'],
                         ['mac/esdt', 'linux/esdt', 'win/esdt']
                 )
             }
