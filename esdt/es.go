@@ -27,8 +27,8 @@ type documentDeletedRes struct {
 	Result string `json:"result"`
 }
 
-func deleteOperationIndex(conn string, rollbackId string) error {
-	res, err := runEsQuery(conn, "operations/_doc/"+rollbackId, "delete", nil)
+func (e *esdtImpl) deleteOperationIndex(rollbackId string) error {
+	res, err := e.runEsQuery("operations/_doc/"+rollbackId, "delete", nil)
 
 	if err != nil {
 		return err
@@ -46,13 +46,13 @@ func deleteOperationIndex(conn string, rollbackId string) error {
 	return nil
 }
 
-func createOperationsIndex(conn string) error {
+func (e *esdtImpl) createOperationsIndex() error {
 	body := "{ \"mappings\": { \"_doc\": { \"properties\": { \"inserted_at\": { \"type\": \"date\" } } } } }"
-	return runEsQueryAndValidate(conn, "operations", "put", body)
+	return e.runEsQueryAndValidate("operations", "put", body)
 }
 
-func operationsIndexExists(conn string) (bool, error) {
-	res, err := runEsQuery(conn, "operations", "head", nil)
+func (e *esdtImpl) operationsIndexExists() (bool, error) {
+	res, err := e.runEsQuery("operations", "head", nil)
 
 	if res == nil {
 		return false, errors.New("no response received from Elasticsearch")
@@ -65,20 +65,20 @@ func operationsIndexExists(conn string) (bool, error) {
 	return res.Response().StatusCode > 199 && res.Response().StatusCode < 300, nil
 }
 
-func rollbackDataTemplate(conn string, dt *Operation) error {
+func (e *esdtImpl) rollbackDataTemplate(dt *Operation) error {
 	if dt.Rollback.Uri == "" || dt.Rollback.Method == "" {
 		return errors.New(NoRollbackFieldErrorMsg)
 	} else {
-		err := runEsQueryAndValidate(conn, dt.Rollback.Uri, dt.Rollback.Method, dt.Rollback.Body)
+		err := e.runEsQueryAndValidate(dt.Rollback.Uri, dt.Rollback.Method, dt.Rollback.Body)
 		if err != nil {
 			return err
 		}
-		return deleteOperationIndex(conn, dt.Id)
+		return e.deleteOperationIndex(dt.Id)
 	}
 }
 
-func operationsDocumentExists(conn string, id string) bool {
-	res, err := runEsQuery(conn, "operations/_doc/"+id, "get", nil)
+func (e *esdtImpl) operationsDocumentExists(id string) bool {
+	res, err := e.runEsQuery("operations/_doc/"+id, "get", nil)
 
 	if res == nil || err != nil {
 		return false
@@ -90,12 +90,12 @@ func operationsDocumentExists(conn string, id string) bool {
 	return d.Found
 }
 
-func executeDataTemplates(conn string, dataTemplates []*Operation) ([]*Operation, []error) {
+func (e *esdtImpl) executeDataTemplates(dataTemplates []*Operation) ([]*Operation, []error) {
 	failed := make([]*Operation, 0)
 	errs := make([]error, 0)
 
 	for _, v := range dataTemplates {
-		err := executeDataTemplate(conn, v)
+		err := e.executeDataTemplate(v)
 		if err != nil {
 			failed = append(failed, v)
 			errs = append(errs, err)
@@ -116,22 +116,22 @@ func executeDataTemplates(conn string, dataTemplates []*Operation) ([]*Operation
 	return failed, errs
 }
 
-func executeDataTemplate(conn string, operation *Operation) error {
-	if !operationsDocumentExists(conn, operation.Id) {
-		err := runEsQueryAndValidate(conn, operation.Uri, operation.Method, operation.Body)
+func (e *esdtImpl) executeDataTemplate(operation *Operation) error {
+	if !e.operationsDocumentExists(operation.Id) {
+		err := e.runEsQueryAndValidate(operation.Uri, operation.Method, operation.Body)
 
 		operations := operations{
 			InsertedAt: time.Now(),
 		}
 		if err != nil {
 			newError := errors.Wrap(err, "")
-			err = rollbackDataTemplate(conn, operation)
+			err = e.rollbackDataTemplate(operation)
 			if err != nil {
 				newError = errors.Wrap(newError, "RollbackFile failed")
 			}
 			return newError
 		} else {
-			err = runEsQueryAndValidate(conn, "/operations/_doc/"+operation.Id, "post", &operations)
+			err = e.runEsQueryAndValidate("/operations/_doc/"+operation.Id, "post", &operations)
 			if err != nil {
 				return errors.New("Failed to add data template to operations")
 			}
@@ -142,9 +142,9 @@ func executeDataTemplate(conn string, operation *Operation) error {
 	return nil
 }
 
-func runEsQuery(conn string, uri string, method string, bodyJson interface{}) (*req.Resp, error) {
+func (e *esdtImpl) runEsQuery(uri string, method string, bodyJson interface{}) (*req.Resp, error) {
 	r := req.New()
-	u, err := url.Parse(conn)
+	u, err := url.Parse(e.getConn())
 	if err != nil {
 		return nil, errors.New("Invalid connection URL")
 	}
@@ -172,8 +172,8 @@ func runEsQuery(conn string, uri string, method string, bodyJson interface{}) (*
 	return res, nil
 }
 
-func runEsQueryAndValidate(conn string, uri string, method string, bodyJson interface{}) error {
-	res, err := runEsQuery(conn, uri, method, bodyJson)
+func (e *esdtImpl) runEsQueryAndValidate(uri string, method string, bodyJson interface{}) error {
+	res, err := e.runEsQuery(uri, method, bodyJson)
 
 	if err != nil {
 		return err
@@ -190,4 +190,14 @@ func runEsQueryAndValidate(conn string, uri string, method string, bodyJson inte
 	}
 
 	return nil
+}
+
+func (e *esdtImpl) getConn() (url string) {
+	strs := strings.Split(e.Config.Conn, "://")
+	if len(strs) == 1 {
+		url = fmt.Sprintf("%s:%s@%s", e.Config.Username, e.Config.Password, strs[0])
+	} else {
+		url = fmt.Sprintf("%s://%s:%s@%s", strs[0], e.Config.Username, e.Config.Password, strings.Join(strs[1:], ""))
+	}
+	return
 }

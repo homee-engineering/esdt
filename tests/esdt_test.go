@@ -83,6 +83,6 @@ func (ets *EsdtTestSuite) TestRollback() {
 	ets.EqualError(err, "elastic: Error 404 (Not Found)")
 }
 
-func TestName(t *testing.T) {
+func TestEsdt(t *testing.T) {
 	suite.Run(t, new(EsdtTestSuite))
 }

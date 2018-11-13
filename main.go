@@ -32,6 +32,16 @@ var GlobalFlags = []cli.Flag{
 		Value:  "dev",
 		EnvVar: "ESDT_ENV",
 	},
+	cli.StringFlag{
+		Name:   "user, username",
+		Usage:  "The username for the Elasticsearch cluster. Accepts env variable ESDT_USER\tDefault: \"\"",
+		EnvVar: "ESDT_USER",
+	},
+	cli.StringFlag{
+		Name:   "pw, password",
+		Usage:  "The password for the Elasticsearch cluster. Accepts env variable ESDT_PASSWORD\tDefault: \"\"",
+		EnvVar: "ESDT_PASSWORD",
+	},
 }
 
 func main() {

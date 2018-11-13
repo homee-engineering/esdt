@@ -10,12 +10,16 @@ func newEsdt(ctx *cli.Context) esdt.Esdt {
 	targetDir := ctx.GlobalString("dir")
 	conn := ctx.GlobalString("conn")
 	env := ctx.GlobalString("env")
+	pw := ctx.GlobalString("password")
+	user := ctx.GlobalString("username")
 
 	in := &esdt.Config{
 		ConfigFile: configFile,
 		TargetDir:  targetDir,
 		Conn:       conn,
 		Env:        env,
+		Password:   pw,
+		Username:   user,
 	}
 
 	return esdt.New(in)

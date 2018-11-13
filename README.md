@@ -63,12 +63,14 @@ All global flags can be configured via command line flag, environment variable, 
 directory (by default `es/operations`)
 
 #### Global flags
-| Flag     | Env Var             | Config.yml field | Description                                                                                  |
-|----------|---------------------|------------------|----------------------------------------------------------------------------------------------|
-| `conn`   | `ELASTICSEARCH_URL` | `conn`           | The Elasticsearch base URL to run all operations against. Default is `http://localhost:9200` |
-| `dir`    | `ESDT_TARGET_DIR`   | `dir`            | The directory of the data operations. Default is `es/operations`                              |
-| `config` | N/A                 | N/A              | The location of your config YAML. Default is ./es/config.tml                                 |
-| `env`    | `ESDT_ENV`          | <env\>           | The environment to run the tool in. Default is dev                                           |
+| Flag       | Env Var             | Config.yml field | Description                                                                                    |
+|------------|---------------------|------------------|------------------------------------------------------------------------------------------------|
+| `conn`     | `ELASTICSEARCH_URL` | `conn`           | The Elasticsearch base URL to run all operations against. Default is `http://localhost:9200`   |
+| `dir`      | `ESDT_TARGET_DIR`   | `dir`            | The directory of the data operations. Default is `es/operations`                               |
+| `config`   | N/A                 | N/A              | The location of your config YAML. Default is ./es/config.tml                                   |
+| `env`      | `ESDT_ENV`          | <env\>           | The environment to run the tool in. Default is dev                                             |
+| `username` | `ESDT_USER`         | `user`           | The username for the Elasticsearch cluster. Default is ""                                      |
+| `password` | `ESDT_PASSWORD`     | `pw`             | The password for the Elasticsearch cluster. Default is ""                                      |
 
 #### Config.yml
 The default config file looks like

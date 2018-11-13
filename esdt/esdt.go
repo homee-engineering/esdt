@@ -100,6 +100,12 @@ type Config struct {
 
 	// The environment used for this esdt. This is the key used in your ConfigFile. Defaults to dev.
 	Env string
+
+	// The username used for the Elasticsearch cluster
+	Username string
+
+	// The password used for the Elasticsearch cluster
+	Password string
 }
 
 func (e *esdtImpl) GetConfig() *Config {
@@ -107,13 +113,13 @@ func (e *esdtImpl) GetConfig() *Config {
 }
 
 func (e *esdtImpl) RunAll() error {
-	ex, err := operationsIndexExists(e.Config.Conn)
+	ex, err := e.operationsIndexExists()
 	if err != nil {
 		return err
 	}
 
 	if !ex {
-		err = createOperationsIndex(e.Config.Conn)
+		err = e.createOperationsIndex()
 		if err != nil {
 			return err
 		}
@@ -132,7 +138,7 @@ func (e *esdtImpl) RunAll() error {
 		}
 	}
 
-	executeDataTemplates(e.Config.Conn, operations)
+	e.executeDataTemplates(operations)
 
 	return nil
 }
@@ -142,7 +148,7 @@ func (e *esdtImpl) RollbackFile(filename string) error {
 	if err != nil {
 		return err
 	}
-	return rollbackDataTemplate(e.Config.Conn, dt)
+	return e.rollbackDataTemplate(dt)
 }
 
 func (e *esdtImpl) Load(filename string) (*Operation, error) {
@@ -166,7 +172,7 @@ func (e *esdtImpl) Load(filename string) (*Operation, error) {
 // Attempts to rollback any previously run Operation. If the operation
 // has not yet been run, an error is returned
 func (e *esdtImpl) Rollback(operation *Operation) error {
-	return rollbackDataTemplate(e.Config.Conn, operation)
+	return e.rollbackDataTemplate(operation)
 }
 
 // Runs a specified Operation.
@@ -182,13 +188,13 @@ func (e *esdtImpl) Run(operation *Operation) error {
 	if operation.Rollback.Body == nil {
 		operation.Rollback.Body = make(map[string]interface{})
 	}
-	ex, err := operationsIndexExists(e.Config.Conn)
+	ex, err := e.operationsIndexExists()
 	if err != nil {
 		return err
 	}
 
 	if !ex {
-		err = createOperationsIndex(e.Config.Conn)
+		err = e.createOperationsIndex()
 		if err != nil {
 			return err
 		}
@@ -198,7 +204,7 @@ func (e *esdtImpl) Run(operation *Operation) error {
 		return errors.New(fmt.Sprintf("Could not find directory %s", e.Config.TargetDir))
 	}
 
-	return executeDataTemplate(e.Config.Conn, operation)
+	return e.executeDataTemplate(operation)
 }
 
 // Create a new esdt object which can run operations against an Elasticsearch cluster.
